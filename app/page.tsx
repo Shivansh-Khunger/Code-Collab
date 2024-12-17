@@ -1,10 +1,10 @@
-"use client"
+"use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ThemeProvider } from "@/components/theme-provider"
-import HomePage from "./HomePage"
-import LoginPage from "./auth/login/page"
-import { Toaster } from "@/components/ui/toaster"
+import { ThemeProvider } from "@/components/theme-provider";
+import HomePage from "./HomePage";
+import LoginPage from "./auth/login/page";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function Home() {
   const router = useRouter();
@@ -20,17 +20,17 @@ export default function Home() {
   });
   return (
     <div>
-		<ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >   
-			<div className="">
-       <Toaster/>
-				<LoginPage />
-			</div>
-		</ThemeProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <div className="">
+          <Toaster />
+          <LoginPage />
+        </div>
+      </ThemeProvider>
     </div>
   );
 }

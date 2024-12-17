@@ -1,6 +1,6 @@
-import { atom } from 'recoil';
+import { atom } from "recoil";
 
 export const CodeContent = atom<string>({
-    key:'code-content',
-    default:'',
-})
+  key: "code-content",
+  default: "",
+});

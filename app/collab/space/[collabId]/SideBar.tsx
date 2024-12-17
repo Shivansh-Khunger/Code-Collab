@@ -1,180 +1,233 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import OutputTerminal from "./Output";
-import { CodeResult } from "@/app/states/codeResult";
-import { useRecoilState } from "recoil";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { codeLang } from "@/app/states/codeLang";
-import { CodeContent } from "@/app/states/codeContent";
 import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Code2,
+  Play,
+  UserRoundCog,
+  LogOut,
+  PanelRight,
+  Save,
+  Download,
+} from "lucide-react";
 
-export type langInfo = {
-  name: string;
-  val: string;
-};
+import { useRecoilState } from "recoil";
+import { codeLang } from "@/app/states/codeLang";
+import { CodeResult, codeResultStatus } from "@/app/states/codeResult";
+import { CodeContent } from "@/app/states/codeContent";
+import useCodeRun from "./codeRun";
+import { useToast } from "@/hooks/use-toast";
 
-export type langVers = {
-  val: string;
-  ver: string;
-};
+import { SidePanel } from "@/components/sidepanel";
 
-export const langArray: langInfo[] = [
-  { name: "javascript", val: "js" },
-  { name: "python", val: "py" },
-  { name: "c", val: "c" },
-  { name: "rust", val: "rs" },
-  { name: "java", val: "java" },
+export const langArray = [
+  { name: "javaScript", val: "js", icon: "🟨" },
+  { name: "python", val: "py", icon: "🐍" },
+  { name: "c", val: "c", icon: "🔧" },
+  { name: "rust", val: "rs", icon: "🦀" },
+  { name: "java", val: "java", icon: "☕" },
 ];
 
-// Required for piston-RCE
-export const langVers: langVers[] = [
-  { val: "js", ver: "18.15.0" },
-  { val: "py", ver: "3.10.0" },
-  { val: "c", ver: "10.2.0" },
-  { val: "rs", ver: "1.68.2" },
-  { val: "java", ver: "15.0.2" },
-];
+export const langVersions = {
+  js: "18.15.0",
+  py: "3.10.0",
+  c: "10.2.0",
+  rs: "1.68.2",
+  java: "15.0.2",
+};
 
 export default function SideBar({
   members,
   langChange,
+  className = "",
 }: {
-  members: any[];
+  members: string[];
   langChange: () => void;
+  className?: string;
 }) {
-  // Recoil States
-  const [output, setOutput] = useRecoilState(CodeResult);
   const [lang, setLang] = useRecoilState(codeLang);
+  const { handleCodeRun } = useCodeRun();
+  const [isRunning, setRunning] = useRecoilState(codeResultStatus);
   const [codeText] = useRecoilState(CodeContent);
-  console.log(codeText);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const { toast } = useToast();
 
-  // Component States
-  const [isRunning, setRunning] = useState(false);
+  const handleSave = () => {
+    // Implement save functionality here
+    console.log("Save button clicked");
+  };
 
-  async function handleCodeRun() {
-    try {
-      // disable run btn
-      setRunning(true);
+  const handleDownload = () => {
+    const element = document.createElement("a");
+    const file = new Blob([codeText], { type: "text/plain" });
+    element.href = URL.createObjectURL(file);
+    element.download = `sample_code.${lang.val}`;
+    document.body.appendChild(element);
+    element.click();
+    toast({
+      title: "Download Started",
+    });
+  };
 
-      const reqBody = {
-        language: lang.val,
-        version: langVers.find((elem) => elem.val == lang.val)?.ver,
-        files: [
-          {
-            name: `sample_code.${lang.val}`,
-            content: codeText,
-          },
-        ],
-        stdin: "",
-        args: ["1", "2", "3"],
-        compile_timeout: 10000,
-        run_timeout: 3000,
-        compile_memory_limit: -1,
-        run_memory_limit: -1,
-      };
-      console.log(reqBody);
-
-      const resp = await fetch("https://emkc.org/api/v2/piston/execute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reqBody),
-      });
-
-      const respJson = await resp.json();
-      // handle code results
-      console.log(respJson);
-
-      if (respJson.run.code == 0) {
-        // successful exec
-        setOutput(respJson.run.stdout);
-      } else if (respJson.run.code != 0) {
-        // error in code exec
-        setOutput(respJson.run.stderr.substring(0, 300));
-      } else if (respJson.run.signal == "SIGKILL") {
-        setOutput(`Time Limit Exceeded: SIGKILL \n ${respJson.run.stdout}`);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-
-    setRunning(false);
-  }
+  const renderToggleButton = (handleToggle: () => void) => (
+    <TooltipProvider>
+      <div className="flex w-full">
+        <div className="w-4/5 flex justify-start">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={handleToggle}>
+                <PanelRight className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isPanelOpen ? "Close Sidebar" : "Open Sidebar"}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <div className="w-1/5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCodeRun}
+                disabled={isRunning}
+              >
+                <Play className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isRunning ? "Running..." : "Run Code"}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
 
   return (
-    <div className=" m-6">
-      <h1 className=" text-2xl font-semibold mb-4"> PairCode: CollabSpace</h1>
-
-      <div className=" mb-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className=" w-60"
-              variant="secondary"
-            >{`Change Language: ${lang.name}`}</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel>Select Language</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup
-              value={lang.name}
-              onValueChange={(e) => {
-                const a = langArray.find((elem) => elem.name == e);
-                console.log(a);
-                langChange();
-                setLang(a);
-              }}
-            >
-              {langArray.map((elem) => (
-                <DropdownMenuRadioItem key={elem.val} value={elem.name}>
-                  {elem.name}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button disabled={isRunning} onClick={handleCodeRun} className=" ml-4">
-          Run
-        </Button>
-      </div>
-
-      <div className=" mb-4">
-        <OutputTerminal output={output} />
-      </div>
-
-      <div>
-        <h1 className=" text-lg mb-2">Active Members</h1>
-        <div className=" mb-10">
-          {members.map((elem) => (
-            <div key={elem} className=" flex mb-2">
-              <Avatar>
-                <AvatarImage src="https://github.com/shadc0n.png" />
-                <AvatarFallback>{elem[0].toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <h1 className=" ml-2 mt-1">{elem}</h1>
+    <>
+      <SidePanel
+        panelOpen={isPanelOpen}
+        handlePanelOpen={() => setIsPanelOpen(!isPanelOpen)}
+        renderButton={renderToggleButton}
+        className={`w-72 max-w-sm shadow-lg border-l ${className}`}
+      >
+        {isPanelOpen && (
+          <div className="flex flex-col h-full">
+            <div className="mb-6 flex items-center justify-between px-4">
+              <div className="flex items-center space-x-2">
+                <Code2 className="w-6 h-6 text-primary" />
+                <h2 className="text-lg font-semibold">CollabSpace</h2>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <UserRoundCog className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Workspace Settings</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-          ))}
-        </div>
 
-        <div>
-          <Link href={"/"}>
-            <Button variant="destructive">Leave CollabSpace</Button>
-          </Link>
-        </div>
-      </div>
-    </div>
+            <div className="mb-6 space-y-2 px-4">
+              <Select
+                value={lang.name}
+                onValueChange={(selectedLang) => {
+                  const selectedLangObj = langArray.find(
+                    (l) => l.name === selectedLang
+                  );
+                  if (selectedLangObj) {
+                    langChange();
+                    setLang(selectedLangObj);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Language">
+                    <div className="flex items-center">
+                      <span className="mr-2">
+                        {langArray.find((l) => l.name === lang.name)?.icon ||
+                          "🟨"}
+                      </span>
+                      {lang.name}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {langArray.map((elem) => (
+                    <SelectItem key={elem.val} value={elem.name}>
+                      <div className="flex items-center">
+                        <span className="mr-2">{elem.icon}</span>
+                        {elem.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex-grow overflow-auto px-4">
+              <h3 className="text-sm font-medium mb-2 text-muted-foreground">
+                Active Members ({members.length})
+              </h3>
+              <div className="space-y-2">
+                {members.map((member) => (
+                  <div key={member} className="flex items-center space-x-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          member
+                        )}&background=random`}
+                      />
+                      <AvatarFallback>{member[0].toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{member}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto p-4 space-y-2">
+              <Button variant="ghost" className="w-full" onClick={handleSave}>
+                <Save className="mr-2 w-4 h-4" />
+                Save
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={handleDownload}
+              >
+                <Download className="mr-2 w-4 h-4" />
+                Download
+              </Button>
+              <Link href="/" className="w-full block mt-4">
+                <Button variant="destructive" className="w-full">
+                  <LogOut className="mr-2 w-4 h-4" />
+                  Leave CollabSpace
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+      </SidePanel>
+    </>
   );
 }

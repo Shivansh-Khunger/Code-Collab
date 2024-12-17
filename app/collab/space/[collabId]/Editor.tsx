@@ -18,6 +18,24 @@ export default function CodeEditor({
     editorRef.current = editor;
     monacoRef.current = monaco;
 
+    const completion = registerCompletion(monaco, editor, {
+      endpoint: "http://localhost:4000/complete",
+      language: lang,
+      trigger: "onDemand",
+    });
+
+    monaco.editor.addEditorAction({
+      id: "monacopilot.triggerCompletion",
+      label: "Complete Code",
+      contextMenuGroupId: "navigation",
+      keybindings: [
+        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space,
+      ],
+      run: () => {
+        completion.trigger();
+      },
+    });
+
     registerCompletion(monaco, editor, {
       endpoint: "http://localhost:4000/complete",
       language: lang,
@@ -26,6 +44,7 @@ export default function CodeEditor({
 
   useEffect(() => {
     if (editorRef.current && monacoRef.current) {
+      console.log("Sending Request for lang" + lang);
       registerCompletion(monacoRef.current, editorRef.current, {
         endpoint: "http://localhost:4000/complete",
         language: lang,
@@ -34,13 +53,31 @@ export default function CodeEditor({
   }, [lang]);
 
   return (
-    <div className="md:h-[90vh] md:w-[75%] h-[60vh] md:border-blue-400 border-2">
+    <div className="md:h-[90vh] md:w-[98%] h-[60vh] border-2">
       <Editor
         language={lang}
         theme="vs-dark"
         value={value}
         onChange={onChange}
         onMount={handleEditorDidMount}
+        options={{
+          fontSize: 14,
+          fontFamily: "Jetbrains-Mono",
+          fontLigatures: true,
+          wordWrap: "on",
+          minimap: {
+            enabled: false,
+          },
+          bracketPairColorization: {
+            enabled: true,
+          },
+          cursorBlinking: "expand",
+          formatOnPaste: true,
+          suggest: {
+            showFields: false,
+            showFunctions: false,
+          },
+        }}
       />
     </div>
   );

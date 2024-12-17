@@ -6,12 +6,12 @@ import SideBar from "./SideBar";
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
-import type { langInfo } from "./SideBar";
-
 import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { CodeContent } from "@/app/states/codeContent";
 import { codeLang } from "@/app/states/codeLang";
+import { CodeResult } from "@/app/states/codeResult";
+import OutputTerminal from "./Output";
 
 export default function Page({ params }: { params: { collabId: string } }) {
   const [currentUser, setCurrentUser] = useRecoilState(userState);
@@ -19,7 +19,7 @@ export default function Page({ params }: { params: { collabId: string } }) {
   const [activeUsers, setActiveUsers] = useState<any>([]);
   const [codeText, setCodeText] = useRecoilState(CodeContent);
   const [isLocalLangChange, setIsLocalLangChange] = useState(false);
-
+  const [output, setOutput] = useRecoilState(CodeResult);
   const [lang, setLang] = useRecoilState(codeLang);
 
   useEffect(() => {
@@ -28,9 +28,6 @@ export default function Page({ params }: { params: { collabId: string } }) {
       setIsLocalLangChange(false);
     }
   }, [lang]);
-
-  // getActiveUsers();
-  console.log(activeUsers);
 
   async function getActiveUsers() {
     try {
@@ -41,17 +38,14 @@ export default function Page({ params }: { params: { collabId: string } }) {
       const respJson = await resp.json();
 
       setActiveUsers(respJson);
-      // construct the array to add you option
     } catch (e) {
       console.log(e);
     }
   }
 
   function emitCodeChange(e: any) {
-    console.log(e);
     socket.emit("send-code-change", { code: e, user: currentUser });
   }
-  0;
 
   const handleLangChange = () => {
     setIsLocalLangChange(true);
@@ -59,19 +53,10 @@ export default function Page({ params }: { params: { collabId: string } }) {
 
   const { toast } = useToast();
 
-  console.log(currentUser);
-
-  console.log("page render");
-
-  // useEffect to connect to the ws server
   useEffect(() => {
-    // connect to server
     const newSocket = io(`${process.env.NEXT_PUBLIC_WS_URI}/`);
     setSocket(newSocket);
 
-    // verify user
-
-    // join room
     newSocket.emit("join-room", {
       collabId: params.collabId,
       user: currentUser,
@@ -79,30 +64,20 @@ export default function Page({ params }: { params: { collabId: string } }) {
 
     setTimeout(getActiveUsers, 3000);
 
-    // when other users join
     newSocket.on("user-joined", (message) => {
-      console.log(`${message} joined the space`);
       toast({
         title: `${message} Joined Collab-Space`,
         description: `${message} has joined the Collab-Space Now`,
         action: <ToastAction altText="Try again">Dismiss</ToastAction>,
       });
 
-      // call the api for active Users list
       setTimeout(getActiveUsers, 2000);
     });
 
-    // handle code change
-
     newSocket.on("receive-code-change", (message) => {
-      console.log(`${message.user} wrote ${message.code}`);
-      // check if its written by current user himself
       setCodeText(message.code);
-
-      // put a star on editing user
     });
 
-    // when a user leaves
     newSocket.on("receive-left-room", (userLeft) => {
       toast({
         title: `${userLeft} Left Collab-Space`,
@@ -113,49 +88,49 @@ export default function Page({ params }: { params: { collabId: string } }) {
       setTimeout(getActiveUsers);
     });
 
-    newSocket.on(
-      "lang-change",
-      (changedLang: langInfo, changedByUser: string) => {
-        if (changedLang.name !== lang.name) {
-          setLang(changedLang);
+    newSocket.on("lang-change", (changedLang, changedByUser: string) => {
+      if (changedLang.name !== lang.name) {
+        setLang(changedLang);
 
-          toast({
-            title: `${changedByUser} has changed language to ${changedLang.name}`,
-            action: <ToastAction altText="Try again">Dismiss</ToastAction>,
-          });
-        }
+        toast({
+          title: `${changedByUser} has changed language to ${changedLang.name}`,
+          action: <ToastAction altText="Try again">Dismiss</ToastAction>,
+        });
       }
-    );
-
-    // cleanup when unmounted
+    });
 
     return () => {
-      // send leaving room event
       newSocket.emit("send-left-room", currentUser);
-
       newSocket.disconnect();
     };
   }, []);
 
   return (
-    <div>
-      <div className=" mt-2 ml-2 mb-4 ">
-        <h1 className=" text-3xl font-bold">PairCode</h1>
+    <>
+      <div className="w-screen h-screen">
+        <div className="flex-grow flex relative m-2">
+          <div className="w-1/5 h-full z-50 flex flex-col justify-between">
+            <SideBar
+              members={activeUsers}
+              langChange={handleLangChange}
+              className="h-3/5"
+            />
+            <div className="m-2 w-1/6 absolute bottom-0">
+              <OutputTerminal output={output} />
+            </div>
+          </div>
+          <div className="w-4/5 h-full">
+            <CodeEditor
+              value={codeText}
+              lang={lang.name}
+              onChange={(e: any) => {
+                setCodeText(e);
+                emitCodeChange(e);
+              }}
+            />
+          </div>
+        </div>
       </div>
-      <div className=" md:flex">
-        <CodeEditor
-          value={codeText}
-          lang={lang.name}
-          onChange={(e: any) => {
-            // change the localcode state
-            setCodeText(e);
-
-            // emit the code change
-            emitCodeChange(e);
-          }}
-        />
-        <SideBar members={activeUsers} langChange={handleLangChange} />
-      </div>
-    </div>
+    </>
   );
 }

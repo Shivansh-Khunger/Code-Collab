@@ -1,11 +1,7 @@
-import JoinCollab from "./JoinCollab"
+import JoinCollab from "./JoinCollab";
 
 function page({ params }: { params: { collabId: string } }) {
-  return (
-    <div>
-        <JoinCollab collabId={params.collabId}/>
-    </div>
-  )
+  return <JoinCollab collabId={params.collabId} />;
 }
 
-export default page
+export default page;

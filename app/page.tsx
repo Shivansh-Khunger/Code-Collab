@@ -19,18 +19,16 @@ export default function Home() {
     }
   });
   return (
-    <div>
+    <>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
       >
-        <div className="">
-          <Toaster />
-          <LoginPage />
-        </div>
+        <Toaster />
+        <HomePage />
       </ThemeProvider>
-    </div>
+    </>
   );
 }

@@ -28,6 +28,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 // Zod validation schema
 const formSchema = z.object({
@@ -41,12 +43,13 @@ const formSchema = z.object({
     }),
 });
 
-function CreateCollab() {
+function CreateCollab({ params }: { params: { name: string } }) {
   const [isSubmitting, setSubmitting] = React.useState(false);
   const [isCreated, setCreated] = React.useState(false);
   const [url, setUrl] = React.useState("");
   const [copyBtn, setCopyBtn] = React.useState("Copy Link");
   const [collabId, setCollabId] = React.useState("");
+  const router = useRouter();
 
   const [currentUser, setCurrentUser] = useRecoilState(userState);
   const { toast } = useToast();
@@ -58,6 +61,14 @@ function CreateCollab() {
       userName: "",
     },
   });
+
+  // Extract the name parameter from the URL and set it as the default value
+  useEffect(() => {
+    const name = params.name as string;
+    if (name) {
+      form.setValue("userName", name.replace("%20", " "));
+    }
+  }, [params.name, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setSubmitting(true);
@@ -111,7 +122,7 @@ function CreateCollab() {
         <Card className="">
           {!isCreated && (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
+              <form onSubmit={form.handleSubmit(onSubmit)} onAbort={() => {}}>
                 <CardHeader>
                   <CardTitle>Create Collab-Space</CardTitle>
                   <CardDescription>
@@ -135,7 +146,13 @@ function CreateCollab() {
                   />
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button type="button" variant="outline">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      router.push("/");
+                    }}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>

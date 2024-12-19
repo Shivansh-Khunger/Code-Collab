@@ -8,18 +8,18 @@ import Image from "next/image";
 import { Card, CardContent } from "../ui/card";
 const carouselContent = [
   {
-    imgSrc: "/carousel/p1.jpg",
+    imgSrc: "/client_1.jpeg",
     description: (
       <>
         ”This product has completely <br /> transformed how I manage my <br />
         projects and deadlines.”
       </>
     ),
-    name: "John Doe",
-    position: "Product Designer",
+    name: "Divyansh Juneja ",
+    position: "Assistant Director, URA",
   },
   {
-    imgSrc: "/carousel/p5.jpg",
+    imgSrc: `/client_2.jpeg`,
     description: (
       <>
         ”A game-changer for our team, <br /> boosting productivity and <br />

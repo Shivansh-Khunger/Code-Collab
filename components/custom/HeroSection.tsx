@@ -31,7 +31,7 @@ const HeroSection = () => {
       <div className="mt-10 p-2 border rounded-xl border-opacity-15 border-white shadow-[-1px_-12px_76px_-22px_#8C45FF]">
         <Image
           className="border border-white border-opacity-15 rounded-xl cursor-pointer"
-          src="/2.png"
+          src="/5.png"
           height={1250}
           width={1250}
           alt="Collaborative code editor dashboard"

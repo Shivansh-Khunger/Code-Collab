@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: string }) {
       icon: (
         <Image priority src={logo} alt="Code Collab Logo" className="h-8 w-8" />
       ),
-      href: "#",
+      href: "/",
     },
 
     {

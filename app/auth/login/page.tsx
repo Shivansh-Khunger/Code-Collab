@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,8 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import * as z from "zod";
-
-
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +41,6 @@ const loginSchema = z.object({
   }),
 });
 
-
 const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
 });
@@ -52,19 +49,25 @@ const otpSchema = z.object({
   otp: z.string().length(6, { message: "OTP must be 6 digits." }),
 });
 
-const passwordSchema = z.object({
-  password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const passwordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters long." }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export default function LoginPage() {
-  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmail, setResetEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
-  const [forgotPasswordStep, setForgotPasswordStep] = useState<'email' | 'otp' | 'newPassword'>('email');
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<
+    "email" | "otp" | "newPassword"
+  >("email");
   const router = useRouter();
   const { toast } = useToast();
 
@@ -100,11 +103,13 @@ export default function LoginPage() {
         password: values.password,
       });
 
+      console.log(response.data.userName);
+
       toast({
         title: "Login Successful",
         description: "You have been logged in successfully.",
       });
-      router.push("/collab/createCollab");
+      router.push(`/collab/create/${response.data.userName}`);
     } catch (error) {
       console.log("Login failed:", error);
       toast({
@@ -132,31 +137,32 @@ export default function LoginPage() {
       const response = await axios.post("http://localhost:4000/users/sendotp", {
         email: values.email,
       });
-      
+
       console.log("OTP sent:", response.data);
-      
+
       toast({
         title: "OTP Sent",
         description: "Please check your email for the OTP.",
       });
-      
-      setForgotPasswordStep('otp');
+
+      setForgotPasswordStep("otp");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // Handle specific axios error responses
-        const errorMessage = error.response?.data?.message || "Failed to send OTP";
-        
+        const errorMessage =
+          error.response?.data?.message || "Failed to send OTP";
+
         toast({
           title: "Error",
           description: errorMessage,
-          variant: "destructive"
+          variant: "destructive",
         });
       } else {
         // Handle unexpected errors
         toast({
           title: "Unexpected Error",
           description: "An unexpected error occurred",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     }
@@ -165,32 +171,36 @@ export default function LoginPage() {
   const onOTPSubmit = async (values: z.infer<typeof otpSchema>) => {
     try {
       setIsLoading(true);
-      
-      const response = await axios.post("http://localhost:4000/users/verifyotp", {
-        email: resetEmail, // Using the stored email
-        otp: values.otp
-      });
-  
+
+      const response = await axios.post(
+        "http://localhost:4000/users/verifyotp",
+        {
+          email: resetEmail, // Using the stored email
+          otp: values.otp,
+        }
+      );
+
       toast({
         title: "OTP Verified",
         description: "Please enter your new password.",
       });
-  
-      setForgotPasswordStep('newPassword');
+
+      setForgotPasswordStep("newPassword");
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || "Failed to verify OTP";
-        
+        const errorMessage =
+          error.response?.data?.message || "Failed to verify OTP";
+
         toast({
           title: "Error",
           description: errorMessage,
-          variant: "destructive"
+          variant: "destructive",
         });
       } else {
         toast({
           title: "Unexpected Error",
           description: "An unexpected error occurred",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } finally {
@@ -201,47 +211,51 @@ export default function LoginPage() {
   const onPasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
     try {
       setIsLoading(true);
-      
+
       // Get the email from the previous step (you might want to store this in state or context)
-      const email = emailForm.getValues('email');
-  
-      const response = await axios.post("http://localhost:4000/users/resetPassword", {
-        email: email,
-        otp: otpForm.getValues('otp'), // Get the OTP from the previous step
-        newPassword: values.password
-      });
-  
+      const email = emailForm.getValues("email");
+
+      const response = await axios.post(
+        "http://localhost:4000/users/resetPassword",
+        {
+          email: email,
+          otp: otpForm.getValues("otp"), // Get the OTP from the previous step
+          newPassword: values.password,
+        }
+      );
+
       toast({
         title: "Password Updated",
         description: "Your password has been successfully updated.",
       });
-  
+
       // Reset forms and close dialog
       setIsForgotPasswordOpen(false);
-      setForgotPasswordStep('email');
+      setForgotPasswordStep("email");
       loginForm.reset();
       emailForm.reset();
       otpForm.reset();
       passwordForm.reset();
-  
+
       // Optional: Redirect to login or show login form
       router.push("/auth/login");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // Handle specific axios error responses
-        const errorMessage = error.response?.data?.message || "Failed to reset password";
-        
+        const errorMessage =
+          error.response?.data?.message || "Failed to reset password";
+
         toast({
           title: "Error",
           description: errorMessage,
-          variant: "destructive"
+          variant: "destructive",
         });
       } else {
         // Handle unexpected errors
         toast({
           title: "Unexpected Error",
           description: "An unexpected error occurred",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } finally {
@@ -260,7 +274,10 @@ export default function LoginPage() {
         </div>
 
         <Form {...loginForm}>
-          <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
+          <form
+            onSubmit={loginForm.handleSubmit(onLoginSubmit)}
+            className="space-y-6"
+          >
             <FormField
               control={loginForm.control}
               name="email"
@@ -319,20 +336,29 @@ export default function LoginPage() {
           Sign Up With Your Email
         </Button>
 
-        <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+        <Dialog
+          open={isForgotPasswordOpen}
+          onOpenChange={setIsForgotPasswordOpen}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Reset Password</DialogTitle>
               <DialogDescription>
-                {forgotPasswordStep === 'email' && "Enter your email to receive a one-time password."}
-                {forgotPasswordStep === 'otp' && "Enter the OTP sent to your email."}
-                {forgotPasswordStep === 'newPassword' && "Enter your new password."}
+                {forgotPasswordStep === "email" &&
+                  "Enter your email to receive a one-time password."}
+                {forgotPasswordStep === "otp" &&
+                  "Enter the OTP sent to your email."}
+                {forgotPasswordStep === "newPassword" &&
+                  "Enter your new password."}
               </DialogDescription>
             </DialogHeader>
 
-            {forgotPasswordStep === 'email' && (
+            {forgotPasswordStep === "email" && (
               <Form {...emailForm}>
-                <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+                <form
+                  onSubmit={emailForm.handleSubmit(onEmailSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={emailForm.control}
                     name="email"
@@ -351,9 +377,12 @@ export default function LoginPage() {
               </Form>
             )}
 
-            {forgotPasswordStep === 'otp' && (
+            {forgotPasswordStep === "otp" && (
               <Form {...otpForm}>
-                <form onSubmit={otpForm.handleSubmit(onOTPSubmit)} className="space-y-4">
+                <form
+                  onSubmit={otpForm.handleSubmit(onOTPSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={otpForm.control}
                     name="otp"
@@ -361,10 +390,7 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>One-Time Password</FormLabel>
                         <FormControl>
-                          <InputOTP
-                            maxLength={6}
-                            {...field}
-                          >
+                          <InputOTP maxLength={6} {...field}>
                             <InputOTPGroup>
                               <InputOTPSlot index={0} />
                               <InputOTPSlot index={1} />
@@ -385,9 +411,12 @@ export default function LoginPage() {
               </Form>
             )}
 
-            {forgotPasswordStep === 'newPassword' && (
+            {forgotPasswordStep === "newPassword" && (
               <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                <form
+                  onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={passwordForm.control}
                     name="password"
@@ -395,7 +424,11 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>New Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Enter new password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="Enter new password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -408,7 +441,11 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Confirm New Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Confirm new password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="Confirm new password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -424,4 +461,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

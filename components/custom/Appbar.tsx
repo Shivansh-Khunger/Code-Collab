@@ -4,19 +4,19 @@ import { AlignJustify } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
+import { useRouter } from "next/navigation";
 const Appbar = () => {
   const links = ["Features", "Developers", "Company", "Blog", "Changelog"];
   const [showMenu, setShowMenu] = useState(false);
-
+  const router = useRouter();
   return (
     <>
       <div className="w-full flex justify-center border-b border-white border-opacity-15">
         <div className="p-5 pb-3 md:px-20 text-white text-xs flex w-full md:w-[85%] items-center justify-between">
           <div>
-            <Image src={"/Logo.png"} alt="reload" height={35} width={35} />
+            <Image src={"/logo.svg"} alt="reload" height={85} width={85} />
           </div>
-          <div className="gap-4 hidden md:flex">
+          {/* <div className="gap-4 hidden md:flex">
             {links.map((link, index) => (
               <Button
                 key={index}
@@ -26,13 +26,16 @@ const Appbar = () => {
                 {link}
               </Button>
             ))}
-          </div>
+          </div> */}
           <div className="flex items-center justify-center gap-2">
             <Button
               variant="outline"
-              className="bg-[#8C45FF] text-white hover:opacity-90"
+              className="text-white"
+              onClick={() => {
+                router.push("/auth/login");
+              }}
             >
-              Join Waitlist
+              Login / SignUp
             </Button>
             <AlignJustify
               size={30}

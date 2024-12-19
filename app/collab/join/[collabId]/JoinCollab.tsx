@@ -151,15 +151,21 @@ export default function JoinCollab({ collabId }: { collabId: string }) {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
+              <CardFooter className="flex justify-between space-x-4">
+                {" "}
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-2/6"
                   onClick={() => form.reset()}
                 >
                   Cancel
                 </Button>
-                {!hasJoined && <Button type="submit">Join Now &gt;</Button>}
+                {!hasJoined && (
+                  <Button type="submit" className="w-4/6">
+                    Join Now &gt;
+                  </Button>
+                )}
               </CardFooter>
             </form>
           </Form>

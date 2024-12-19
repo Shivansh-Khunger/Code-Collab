@@ -94,7 +94,7 @@ function CreateCollab({ params }: { params: { name: string } }) {
         setCurrentUser(values.userName);
 
         setCollabId(respJson.collabId);
-        setUrl(`http://localhost:3002/collab/join/${respJson.collabId}`);
+        setUrl(`http://localhost:3000/collab/join/${respJson.collabId}`);
         setCreated(true);
       } else {
         toast({

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import TypingAnimation from "@/components/typing-animation";
+
 const Appbar = () => {
   const links = ["Features", "Developers", "Company", "Blog", "Changelog"];
   const [showMenu, setShowMenu] = useState(false);
@@ -13,9 +15,13 @@ const Appbar = () => {
     <>
       <div className="w-full flex justify-center border-b border-white border-opacity-15">
         <div className="p-5 pb-3 md:px-20 text-white text-xs flex w-full md:w-[85%] items-center justify-between">
-          <div>
+          <div className="flex justify-center items-center gap-x-2">
             <Image src={"/logo.svg"} alt="reload" height={85} width={85} />
           </div>
+          <TypingAnimation
+            className="text-4xl font-semibold dark:text-white"
+            text="Code Collab"
+          />
           {/* <div className="gap-4 hidden md:flex">
             {links.map((link, index) => (
               <Button

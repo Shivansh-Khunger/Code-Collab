@@ -57,28 +57,39 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Here you would typically make an API call to your signup endpoint
-      // For demonstration, we'll just simulate a delay
       const response = await axios.post("http://localhost:4000/users/signup", {
         name: values.name,
         email: values.email,
         password: values.password,
       });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    
       // Simulating a successful signup
       toast({
-        title: "Login Successful",
-        description: "You have been logged in successfully.",
+        title: "Signup Successful",
+        description: "Your account has been created successfully.",
       });
+    
       router.push("/auth/login"); // Redirect to login page after successful signup
     } catch (error) {
-      toast({
-        title: "Signup Failed",
-        description:
-          "There was an error creating your account. Please try again.",
-        variant: "destructive",
-      });
+      // Check if it's an Axios error with a response from the backend
+      if (axios.isAxiosError(error) && error.response) {
+        // Extract the error message from the backend response
+        const errorMessage = error.response.data.message || 
+          "There was an error creating your account. Please try again.";
+    
+        toast({
+          title: "Signup Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        // Handle network errors or other unexpected errors
+        toast({
+          title: "Signup Failed",
+          description: "There was an unexpected error. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

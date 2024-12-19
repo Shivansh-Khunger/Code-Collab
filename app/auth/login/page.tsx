@@ -1,11 +1,14 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import * as z from "zod";
+
+
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,7 +26,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   InputOTP,
@@ -32,7 +34,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 
-const formSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
@@ -41,38 +43,68 @@ const formSchema = z.object({
   }),
 });
 
+
+const emailSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address." }),
+});
+
+const otpSchema = z.object({
+  otp: z.string().length(6, { message: "OTP must be 6 digits." }),
+});
+
+const passwordSchema = z.object({
+  password: z.string().min(8, { message: "Password must be at least 8 characters long." }),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export default function LoginPage() {
+  const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<'email' | 'otp' | 'newPassword'>('email');
   const router = useRouter();
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const emailForm = useForm<z.infer<typeof emailSchema>>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: "" },
+  });
+
+  const otpForm = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: { otp: "" },
+  });
+
+  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
+  async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
 
     try {
-      // Here you would typically make an API call to your authentication endpoint
-      const response = await axios.get("http://localhost:4000/users/signin", {
+      const response = await axios.post("http://localhost:4000/users/signin", {
         email: values.email,
         password: values.password,
       });
 
-      // For demonstration, we'll just simulate a delay
-
-      // Simulating a successful login
       toast({
         title: "Login Successful",
         description: "You have been logged in successfully.",
       });
-      router.push("/collab/createCollab"); // Redirect to dashboard or home page
+      router.push("/collab/createCollab");
     } catch (error) {
       console.log("Login failed:", error);
       toast({
@@ -86,38 +118,151 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    // Implement Google login logic here
-    router.push("/auth/signup"); // Redirect to dashboard or home page
+    router.push("/auth/signup");
   };
 
   const handleForgotPassword = () => {
-    setIsDialogOpen(true);
+    setIsForgotPasswordOpen(true);
   };
 
-  const handleOTPSubmit = (otp: string) => {
-    // Implement OTP verification logic here
-    console.log("OTP submitted:", otp);
-    // setIsDialogOpen(false)
-    toast({
-      title: "OTP Submitted",
-      description: "Your OTP has been submitted successfully.",
-    });
+  const onEmailSubmit = async (values: z.infer<typeof emailSchema>) => {
+    try {
+      setResetEmail(values.email);
+      console.log("Sending OTP to:", values.email);
+      const response = await axios.post("http://localhost:4000/users/sendotp", {
+        email: values.email,
+      });
+      
+      console.log("OTP sent:", response.data);
+      
+      toast({
+        title: "OTP Sent",
+        description: "Please check your email for the OTP.",
+      });
+      
+      setForgotPasswordStep('otp');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Handle specific axios error responses
+        const errorMessage = error.response?.data?.message || "Failed to send OTP";
+        
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      } else {
+        // Handle unexpected errors
+        toast({
+          title: "Unexpected Error",
+          description: "An unexpected error occurred",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const onOTPSubmit = async (values: z.infer<typeof otpSchema>) => {
+    try {
+      setIsLoading(true);
+      
+      const response = await axios.post("http://localhost:4000/users/verifyotp", {
+        email: resetEmail, // Using the stored email
+        otp: values.otp
+      });
+  
+      toast({
+        title: "OTP Verified",
+        description: "Please enter your new password.",
+      });
+  
+      setForgotPasswordStep('newPassword');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || "Failed to verify OTP";
+        
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Unexpected Error",
+          description: "An unexpected error occurred",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onPasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
+    try {
+      setIsLoading(true);
+      
+      // Get the email from the previous step (you might want to store this in state or context)
+      const email = emailForm.getValues('email');
+  
+      const response = await axios.post("http://localhost:4000/users/resetPassword", {
+        email: email,
+        otp: otpForm.getValues('otp'), // Get the OTP from the previous step
+        newPassword: values.password
+      });
+  
+      toast({
+        title: "Password Updated",
+        description: "Your password has been successfully updated.",
+      });
+  
+      // Reset forms and close dialog
+      setIsForgotPasswordOpen(false);
+      setForgotPasswordStep('email');
+      loginForm.reset();
+      emailForm.reset();
+      otpForm.reset();
+      passwordForm.reset();
+  
+      // Optional: Redirect to login or show login form
+      router.push("/");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Handle specific axios error responses
+        const errorMessage = error.response?.data?.message || "Failed to reset password";
+        
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      } else {
+        // Handle unexpected errors
+        toast({
+          title: "Unexpected Error",
+          description: "An unexpected error occurred",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center z-20">
       <div className="w-full max-w-md space-y-8 rounded-lg shadow-md p-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold ">Login to your account</h2>
-          <p className="mt-2 text-sm ">
+          <h2 className="text-3xl font-bold">Login to your account</h2>
+          <p className="mt-2 text-sm">
             Enter your email and password to access your account
           </p>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Form {...loginForm}>
+          <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
             <FormField
-              control={form.control}
+              control={loginForm.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -130,7 +275,7 @@ export default function LoginPage() {
               )}
             />
             <FormField
-              control={form.control}
+              control={loginForm.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
@@ -171,22 +316,108 @@ export default function LoginPage() {
           variant="outline"
           className="w-full"
         >
-          {/* <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-            <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-          </svg> */}
           Sign Up With Your Email
         </Button>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Enter OTP</DialogTitle>
+              <DialogTitle>Reset Password</DialogTitle>
               <DialogDescription>
-                We've sent a one-time password to your email. Please enter it
-                below.
+                {forgotPasswordStep === 'email' && "Enter your email to receive a one-time password."}
+                {forgotPasswordStep === 'otp' && "Enter the OTP sent to your email."}
+                {forgotPasswordStep === 'newPassword' && "Enter your new password."}
               </DialogDescription>
             </DialogHeader>
-            <OTPInput onComplete={handleOTPSubmit} />
+
+            {forgotPasswordStep === 'email' && (
+              <Form {...emailForm}>
+                <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+                  <FormField
+                    control={emailForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">Send OTP</Button>
+                </form>
+              </Form>
+            )}
+
+            {forgotPasswordStep === 'otp' && (
+              <Form {...otpForm}>
+                <form onSubmit={otpForm.handleSubmit(onOTPSubmit)} className="space-y-4">
+                  <FormField
+                    control={otpForm.control}
+                    name="otp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>One-Time Password</FormLabel>
+                        <FormControl>
+                          <InputOTP
+                            maxLength={6}
+                            {...field}
+                          >
+                            <InputOTPGroup>
+                              <InputOTPSlot index={0} />
+                              <InputOTPSlot index={1} />
+                              <InputOTPSlot index={2} />
+                              <InputOTPSeparator />
+                              <InputOTPSlot index={3} />
+                              <InputOTPSlot index={4} />
+                              <InputOTPSlot index={5} />
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">Verify OTP</Button>
+                </form>
+              </Form>
+            )}
+
+            {forgotPasswordStep === 'newPassword' && (
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Enter new password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Confirm new password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">Update Password</Button>
+                </form>
+              </Form>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -194,34 +425,3 @@ export default function LoginPage() {
   );
 }
 
-function OTPInput({ onComplete }: { onComplete: (otp: string) => void }) {
-  const [otp, setOtp] = useState("");
-
-  const handleComplete = (value: string) => {
-    setOtp(value);
-    if (value.length === 6) {
-      onComplete(value);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center space-y-4">
-      <InputOTP maxLength={6} value={otp} onChange={handleComplete}>
-        <InputOTPGroup>
-          <InputOTPSlot index={0} />
-          <InputOTPSlot index={1} />
-          <InputOTPSlot index={2} />
-        </InputOTPGroup>
-        <InputOTPSeparator />
-        <InputOTPGroup>
-          <InputOTPSlot index={3} />
-          <InputOTPSlot index={4} />
-          <InputOTPSlot index={5} />
-        </InputOTPGroup>
-      </InputOTP>
-      <Button onClick={() => onComplete(otp)} disabled={otp.length !== 6}>
-        Submit OTP
-      </Button>
-    </div>
-  );
-}

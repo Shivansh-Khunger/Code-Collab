@@ -225,7 +225,7 @@ export default function LoginPage() {
       passwordForm.reset();
   
       // Optional: Redirect to login or show login form
-      router.push("/");
+      router.push("/auth/login");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // Handle specific axios error responses
@@ -251,7 +251,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center z-20">
-      <div className="w-full max-w-md space-y-8 rounded-lg shadow-md p-8">
+      <div className="w-full max-w-md space-y-8 rounded-lg shadow-md p-8 border-gray-500 ">
         <div className="text-center">
           <h2 className="text-3xl font-bold">Login to your account</h2>
           <p className="mt-2 text-sm">

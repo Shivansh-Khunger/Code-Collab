@@ -24,7 +24,9 @@ import {
   PanelRight,
   Save,
   Download,
+  User2,
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 import { useRecoilState } from "recoil";
 import { codeLang } from "@/app/states/codeLang";
@@ -131,23 +133,23 @@ export default function SideBar({
         {isPanelOpen && (
           <div className="flex flex-col h-full">
             <div className="mb-6 flex items-center justify-between px-4">
-              <div className="flex items-center space-x-2">
-                <Code2 className="w-6 h-6 text-primary" />
-                <h2 className="text-lg font-semibold">CollabSpace</h2>
-              </div>
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild>
+                  {/* <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon">
                       <UserRoundCog className="w-5 h-5" />
                     </Button>
-                  </TooltipTrigger>
+                  </TooltipTrigger> */}
                   <TooltipContent>Workspace Settings</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
 
             <div className="mb-6 space-y-2 px-4">
+              <div className="flex items-center space-x-2">
+                <Code2 className="w-6 h-6 text-primary" />
+                <h2 className="text-lg font-semibold">Selection</h2>
+              </div>
               <Select
                 value={lang.name}
                 onValueChange={(selectedLang) => {
@@ -184,11 +186,17 @@ export default function SideBar({
               </Select>
             </div>
 
-            <div className="flex-grow overflow-auto px-4">
-              <h3 className="text-sm font-medium mb-2 text-muted-foreground">
-                Active Members ({members.length})
-              </h3>
-              <div className="space-y-2">
+            <Separator className="my-2" />
+
+            <div className="flex-grow overflow-auto px-4 space-y-4">
+              <div className="flex items-center space-x-2 my-2">
+                <User2 className="w-6 h-6 text-primary" />
+                <h2 className="text-base text-muted-foreground">
+                  Active Members ({members.length})
+                </h2>
+              </div>
+
+              <div className="space-y-4">
                 {members.map((member) => (
                   <div key={member} className="flex items-center space-x-2">
                     <Avatar className="w-8 h-8">

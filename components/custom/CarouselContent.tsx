@@ -18,40 +18,40 @@ const carouselContent = [
     name: "Divyansh Juneja ",
     position: "Assistant Director, URA",
   },
-  {
-    imgSrc: `/client_2.jpeg`,
-    description: (
-      <>
-        ”A game-changer for our team, <br /> boosting productivity and <br />
-        collaboration.”
-      </>
-    ),
-    name: "Albert Saffron",
-    position: "Founder",
-  },
-  {
-    imgSrc: "/carousel/p3.jpg",
-    description: (
-      <>
-        ”An essential tool for our daily <br /> operations, making everything{" "}
-        <br />
-        smoother.”
-      </>
-    ),
-    name: "Dave Augustus",
-    position: "Backend Developer",
-  },
-  {
-    imgSrc: "/carousel/p4.jpg",
-    description: (
-      <>
-        ”Incredible features that <br /> streamline our workflow <br />
-        effortlessly.”
-      </>
-    ),
-    name: "Samuel Burger",
-    position: "Photographer",
-  },
+  // {
+  //   imgSrc: `/carousel/p2.jpg`,
+  //   description: (
+  //     <>
+  //       ”A game-changer for our team, <br /> boosting productivity and <br />
+  //       collaboration.”
+  //     </>
+  //   ),
+  //   name: "Albert Saffron",
+  //   position: "Founder",
+  // },
+  // {
+  //   imgSrc: "/carousel/p3.jpg",
+  //   description: (
+  //     <>
+  //       ”An essential tool for our daily <br /> operations, making everything{" "}
+  //       <br />
+  //       smoother.”
+  //     </>
+  //   ),
+  //   name: "Dave Augustus",
+  //   position: "Backend Developer",
+  // },
+  // {
+  //   imgSrc: "/carousel/p4.jpg",
+  //   description: (
+  //     <>
+  //       ”Incredible features that <br /> streamline our workflow <br />
+  //       effortlessly.”
+  //     </>
+  //   ),
+  //   name: "Samuel Burger",
+  //   position: "Photographer",
+  // },
 ];
 const CarouselContent = () => {
   return (

@@ -98,10 +98,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:4000/users/signin", {
-        email: values.email,
-        password: values.password,
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URI}/users/signin`,
+        {
+          email: values.email,
+          password: values.password,
+        }
+      );
 
       console.log(response.data.userName);
 
@@ -134,9 +137,12 @@ export default function LoginPage() {
     try {
       setResetEmail(values.email);
       console.log("Sending OTP to:", values.email);
-      const response = await axios.post("http://localhost:4000/users/sendotp", {
-        email: values.email,
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URI}/users/sendotp`,
+        {
+          email: values.email,
+        }
+      );
 
       console.log("OTP sent:", response.data);
 
@@ -173,7 +179,7 @@ export default function LoginPage() {
       setIsLoading(true);
 
       const response = await axios.post(
-        "http://localhost:4000/users/verifyotp",
+        `${process.env.NEXT_PUBLIC_API_URI}/users/verifyotp`,
         {
           email: resetEmail, // Using the stored email
           otp: values.otp,
@@ -216,7 +222,7 @@ export default function LoginPage() {
       const email = emailForm.getValues("email");
 
       const response = await axios.post(
-        "http://localhost:4000/users/resetPassword",
+        `${process.env.NEXT_PUBLIC_API_URI}/users/resetPassword`,
         {
           email: email,
           otp: otpForm.getValues("otp"), // Get the OTP from the previous step
@@ -324,7 +330,7 @@ export default function LoginPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-2">Don't have Account</span>
+            <span className="px-2">Don&apos;t have Account</span>
           </div>
         </div>
 

@@ -57,26 +57,30 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:4000/users/signup", {
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      });
-    
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URI}/users/signup`,
+        {
+          name: values.name,
+          email: values.email,
+          password: values.password,
+        }
+      );
+
       // Simulating a successful signup
       toast({
         title: "Signup Successful",
         description: "Your account has been created successfully.",
       });
-    
+
       router.push("/auth/login"); // Redirect to login page after successful signup
     } catch (error) {
       // Check if it's an Axios error with a response from the backend
       if (axios.isAxiosError(error) && error.response) {
         // Extract the error message from the backend response
-        const errorMessage = error.response.data.message || 
+        const errorMessage =
+          error.response.data.message ||
           "There was an error creating your account. Please try again.";
-    
+
         toast({
           title: "Signup Failed",
           description: errorMessage,
